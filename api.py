@@ -1,12 +1,10 @@
 import os
 import logging
 import datetime as dt
-import hashlib
-import json
-from time import time
-from urllib.parse import urlparse
-# from uuid import uuid4
-# from flask import Flask, jsonify, request
+from uuid import uuid4
+from flask import Flask, jsonify, request
+import blockchain
+from argparse import ArgumentParser
 
 token = os.environ['TOKEN']
 
@@ -20,10 +18,6 @@ fileConfig('logger.ini')
 logger = logging.getLogger()
 logger.setLevel(logging.DEBUG)
 
-start = dt.datetime.now()
-
-logger.info("IT'S SHOWTIME")
-
 # Instantiate the Node
 app = Flask(__name__)
 
@@ -31,26 +25,31 @@ app = Flask(__name__)
 node_identifier = str(uuid4()).replace('-', '')
 
 # Instantiate the Blockchain
-blockchain = Blockchain()
+bk = blockchain.BlockChain()
+
+"""
+To know more about flask:
+https://scotch.io/tutorials/build-a-restful-api-with-flask-the-tdd-way
+"""
 
 
 @app.route('/mine', methods=['GET'])
 def mine():
     # We run the proof of work algorithm to get the next proof...
-    last_block = blockchain.last_block
-    proof = blockchain.proof_of_work(last_block)
+    last_block = bk.last_block
+    proof = bk.proof_of_work(last_block)
 
     # We must receive a reward for finding the proof.
     # The sender is "0" to signify that this node has mined a new coin.
-    blockchain.new_transaction(
+    bk.new_transaction(
         sender="0",
         recipient=node_identifier,
         amount=1,
     )
 
     # Forge the new Block by adding it to the chain
-    previous_hash = blockchain.hash(last_block)
-    block = blockchain.new_block(proof, previous_hash)
+    previous_hash = bk.hash(last_block)
+    block = bk.new_block(proof, previous_hash)
 
     response = {
         'message': "New Block Forged",
@@ -59,6 +58,7 @@ def mine():
         'proof': block['proof'],
         'previous_hash': block['previous_hash'],
     }
+
     return jsonify(response), 200
 
 
@@ -69,10 +69,11 @@ def new_transaction():
     # Check that the required fields are in the POST'ed data
     required = ['sender', 'recipient', 'amount']
     if not all(k in values for k in required):
-        return 'Missing values', 400
+        message = 'Missing values'
+        return message, 400
 
     # Create a new Transaction
-    index = blockchain.new_transaction(values['sender'], values['recipient'], values['amount'])
+    index = bk.new_transaction(values['sender'], values['recipient'], values['amount'])
 
     response = {'message': f'Transaction will be added to Block {index}'}
     return jsonify(response), 201
@@ -81,8 +82,8 @@ def new_transaction():
 @app.route('/chain', methods=['GET'])
 def full_chain():
     response = {
-        'chain': blockchain.chain,
-        'length': len(blockchain.chain),
+        'chain': bk.chain,
+        'length': len(bk.chain),
     }
     return jsonify(response), 200
 
@@ -92,42 +93,46 @@ def register_nodes():
     values = request.get_json()
 
     nodes = values.get('nodes')
+
     if nodes is None:
-        return "Error: Please supply a valid list of nodes", 400
+        message = "Please supply a valid list of nodes"
+        return message, 400
 
     for node in nodes:
-        blockchain.register_node(node)
+        bk.register_node(node)
 
     response = {
         'message': 'New nodes have been added',
-        'total_nodes': list(blockchain.nodes),
+        'total_nodes': list(bk.nodes),
     }
+
     return jsonify(response), 201
 
 
 @app.route('/nodes/resolve', methods=['GET'])
 def consensus():
-    replaced = blockchain.resolve_conflicts()
+    replaced = bk.resolve_conflicts()
 
     if replaced:
         response = {
             'message': 'Our chain was replaced',
-            'new_chain': blockchain.chain
+            'new_chain': bk.chain
         }
     else:
         response = {
             'message': 'Our chain is authoritative',
-            'chain': blockchain.chain
+            'chain': bk.chain
         }
 
     return jsonify(response), 200
 
 
 if __name__ == '__main__':
-    from argparse import ArgumentParser
+    logger.info("IT'S SHOWTIME")
 
     parser = ArgumentParser()
-    parser.add_argument('-p', '--port', default=5000, type=int, help='port to listen on')
+    parser.add_argument('-p', '--port', default=5000, type=int, help='Port to listen on')
     args = parser.parse_args()
     port = args.port
+
     app.run(host='0.0.0.0', port=port)

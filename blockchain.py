@@ -1,14 +1,9 @@
 import os
 import logging
-import datetime as dt
 import hashlib
 import json
 from time import time
 from urllib.parse import urlparse
-# from uuid import uuid4
-# from flask import Flask, jsonify, request
-
-token = os.environ['TOKEN']
 
 if not os.path.isdir('logs'):
     os.makedirs('logs')
@@ -20,16 +15,17 @@ fileConfig('logger.ini')
 logger = logging.getLogger()
 logger.setLevel(logging.DEBUG)
 
-start = dt.datetime.now()
-
-logger.info("IT'S SHOWTIME")
-
+# this have to be an environment variable. It's better it becomes https!
 protocol_end_point = 'http://'
 
 
 class BlockChain:
 
     """
+    To know more about blockchain read the following article
+
+    http://www.michaelnielsen.org/ddi/how-the-bitcoin-protocol-actually-works/
+
     More info about this class within
 
     https://hackernoon.com/learn-blockchains-by-building-one-117428612f46
