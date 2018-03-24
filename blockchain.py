@@ -61,7 +61,7 @@ class BlockChain:
             logger.debug('Block: {}'.format(block))
 
             # Check that the hash of the block is correct
-            if block['previous_hash'] != self._hash(last_block):
+            if block['previous_hash'] != self.hash(last_block):
                 return False
 
             # Check that the Proof of Work is correct
@@ -143,7 +143,7 @@ class BlockChain:
             'timestamp': time(),
             'transactions': self.current_transactions,
             'proof': proof,
-            'previous_hash': previous_hash or self._hash(self.chain[-1]),
+            'previous_hash': previous_hash or self.hash(self.chain[-1]),
         }
 
         # Reset the current list of transactions
@@ -180,7 +180,7 @@ class BlockChain:
         """
 
         last_proof = last_block['proof']
-        last_hash = self._hash(last_block)
+        last_hash = self.hash(last_block)
 
         proof = 0
         while self._valid_proof(last_proof, proof, last_hash) is False:
@@ -193,7 +193,7 @@ class BlockChain:
         return self.chain[-1]
 
     @staticmethod
-    def _hash(block):
+    def hash(block):
         """
         Creates a SHA-256 hash of a Block
 

@@ -4,7 +4,6 @@ from logging.config import fileConfig
 from uuid import uuid4
 from flask import Flask, jsonify, request
 import blockchain
-from argparse import ArgumentParser
 
 if not os.path.isdir('logs'):
     os.makedirs('logs')
@@ -29,6 +28,15 @@ bk = blockchain.BlockChain()
 To know more about flask:
 https://scotch.io/tutorials/build-a-restful-api-with-flask-the-tdd-way
 """
+
+
+@app.route('/', methods=['GET'])
+def hello_world():
+    message_methods = 'You can: \n /mine \n /transactions/new \n /chain ' \
+                      '\n /nodes/register \n /nodes/resolve'
+
+    message = 'Hello world to my Blockchain. \n {}'.format(message_methods)
+    return message, 200
 
 
 @app.route('/mine', methods=['GET'])
@@ -127,10 +135,4 @@ def consensus():
 
 if __name__ == '__main__':
     logger.info("IT'S SHOWTIME")
-
-    parser = ArgumentParser()
-    parser.add_argument('-p', '--port', default=5000, type=int, help='Port to listen on')
-    args = parser.parse_args()
-    port = args.port
-
-    app.run(host='0.0.0.0', port=port)
+    app.run(debug=True)
