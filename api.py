@@ -1,12 +1,10 @@
 import os
-import logging
-import datetime as dt
+import logging.config
+from logging.config import fileConfig
 from uuid import uuid4
 from flask import Flask, jsonify, request
 import blockchain
 from argparse import ArgumentParser
-
-token = os.environ['TOKEN']
 
 if not os.path.isdir('logs'):
     os.makedirs('logs')

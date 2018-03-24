@@ -1,5 +1,6 @@
 import os
-import logging
+import logging.config
+from logging.config import fileConfig
 import hashlib
 import json
 from time import time
